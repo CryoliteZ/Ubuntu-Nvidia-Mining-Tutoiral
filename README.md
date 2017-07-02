@@ -1,7 +1,7 @@
-# Ubuntu Nvidia 挖礦懶人包
+# Ubuntu-Nvidia-Mining-Tutoiral
+Ubuntu Nvidia 挖礦懶人包
 
-
-由於版上已經有許多Windows的教學文章，好像比較少看到Linux的，這邊寫一篇以Ubuntu 16.04為範例給新手看的N卡挖礦中文教學。以下內容將涵蓋
+由於眾多教學文章多為Windows，好像比較少看到Linux的，這邊寫一篇以Ubuntu 16.04為範例給新手看的N卡挖礦中文教學。以下內容將涵蓋
 
 * Driver的安裝
 * Cuda的安裝
