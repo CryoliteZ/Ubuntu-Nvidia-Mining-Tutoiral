@@ -1,6 +1,7 @@
 # Ubuntu Nvidia 挖礦懶人包
 
-由於眾多教學文章多為Windows，好像比較少看到Linux的，這邊寫一篇以Ubuntu 16.04為範例給新手看的N卡挖礦中文教學。以下內容將涵蓋
+
+由於版上已經有許多Windows的教學文章，好像比較少看到Linux的，這邊寫一篇以Ubuntu 16.04為範例給新手看的N卡挖礦中文教學。以下內容將涵蓋
 
 * Driver的安裝
 * Cuda的安裝
@@ -74,13 +75,15 @@ export LD_LIBRARY_PATH=/usr/local/cuda-8.0/lib64:$LD_LIBRARY_PATH
 N卡比較適合挖zec，EWBF其操作流程跟Windows上都差不多，先去[Poloniex](https://poloniex.com/)或是[Bittrex](https://bittrex.com/)申請錢包。礦池可以選擇[魚池](https://www.f2pool.com/help)、[Nanopool](https://nanopool.org/)、[flypool](https://zcash.flypool.org/)或是[Dwarfpool](https://dwarfpool.com/)。以下用Nanopool當作範例
 
 ```
-./miner --server zec-asia1.nanopool.org --port 6666 --user t1TRH4eTRZYrKY43A4LMLkkmhnkYFAkHHwt.myworker/myemail --pass z --log 2 --templimit 75 --api --pec
+./miner --server zec-asia1.nanopool.org --port 6666 --user t1TRH4eTRZYrKY43A4LMLkkmhnkYFAkHHwt.myworker/myemail --pass z --log 2 --templimit 75 --api --pec --intensity 64 --cuda_devices 0 1
 --server 礦池位址
---user 錢包位址.礦工名稱/礦工信箱 (後兩項為optional)
+--user 錢包位址.礦工名稱/礦工信箱 (後兩項名稱信箱為optional)
 --templimit 溫度上限
 --log 產生miner.log,1只有error output，2有console output
 --api 預設開在 http://127.0.0.1:42000/ 
 --pec 顯示 power usage 跟 Sol/W 
+--intensity performance強度，預設為adaptive並會想辦法用maximum，手動可以條整 1~64
+--cuda_devices 選擇要跑哪張卡 0 1 2 ..
 ```
 
 ![](https://i.imgur.com/6fHWhwi.png)
@@ -89,7 +92,7 @@ N卡比較適合挖zec，EWBF其操作流程跟Windows上都差不多，先去[P
 
 ### Claymore for Ethereum/ Musicoin [[下載連結(linux)](https://drive.google.com/drive/folders/0B69wv2iqszefdFZUV2toUG5HdlU)]
 
-操作方式大同小異。礦池Ethereum可以用[魚池](https://www.f2pool.com/help)，Musicoin可以用[Gpuminepool](http://www.gpumine.org/#/)。下面以挖Musicoin為範例
+操作方式大同小異。礦池Ethereum可以用[魚池](https://www.f2pool.com/help)、[Nanopool](https://nanopool.org/)、[Ethmine](https://ethermine.org/)，Musicoin可以用[Gpuminepool](http://www.gpumine.org/#/)。下面以挖Musicoin為範例
 
 ```
 ./ethdcrminer64 -epool gpumine.org:8508 -ewal 0x7647f80db8531cbde0562b46494a6bbb9c52ffff -epsw x -allpools 1 -allcoins 1 -eworker miner001
@@ -98,27 +101,19 @@ N卡比較適合挖zec，EWBF其操作流程跟Windows上都差不多，先去[P
 -eworker 礦工名稱
 ```
 
+### Ethminer for Ethereum/ Musicoin [[下載連結(linux)](https://github.com/ethereum-mining/ethminer/releases)]
+有針對1060、1070優化的miner，實測上大概多個1~2MH。下面以挖Ethereum為範例。
+```
+./ethminer -U -S us2.ethermine.org:4444 -O 0xddaed2e6ae80862cc1084a8bc5816a28bbbc97f6.main
+
+-S 礦池
+-O 錢包.礦工名稱
+```
+可以跑 `ethminer --help` 去看更多可以調整的參數
+
+
 ## 超頻/節能調整指令
 
-###  Script
-1. 打開任何可以打字文字編輯器，貼上（可自行修改參數）
-```
-#!/bin/bash
-# set power limit
-sudo nvidia-smi --power-limit=130
-nvidia-smi -i 0 --format=csv --query-gpu=power.limit
-
-# core clock 
-nvidia-settings -a "[gpu:0]/GPUGraphicsClockOffset[3]=100"
-# memory clock
-nvidia-settings -a "[gpu:0]/GPUMemoryTransferRateOffset[3]=350"
-# enable fan control
-nvidia-settings -a '[gpu:0]/GPUFanControlState=1'
-# set fan speed
-nvidia-settings -a '[fan:0]/GPUTargetFanSpeed=70'
-```
-2. 存成 `myscript.sh`，去terminal`chmod+x myscript.sh`開啟可執行權限
-3. 執行`./myscript` 就設定完成了！
 
 ### 透過  Nvidia Control Center 調整
 
@@ -145,6 +140,47 @@ reboot
 ![](https://i.imgur.com/BLTt3FG.png)
 
 > 在Thermal Settings 可以條整 Fan Speed
+> 
+
+###  Script
+若已經執行完上面的步驟，之後可以直接透過script設定
+1. 打開任何可以打字文字編輯器，貼上（可自行修改參數）
+以下範例用兩張顯示卡
+```
+#!/bin/bash
+# set power limit globally for all gpu
+sudo nvidia-smi --power-limit=170
+
+# set power limit for individual gpu (Use 2 as example)
+# set [gpu0] power limit to 165
+sudo nvidia-smi -i 0 -pl 165
+# set [gpu1] power limit to 100
+sudo nvidia-smi -i 1 -pl 100
+
+# Check result for gpu0
+nvidia-smi -i 0 --format=csv --query-gpu=power.limit
+# Check result for gpu1
+nvidia-smi -i 1 --format=csv --query-gpu=power.limit
+
+# core clock 
+nvidia-settings -a "[gpu:0]/GPUGraphicsClockOffset[3]=100"
+# memory clock
+nvidia-settings -a "[gpu:0]/GPUMemoryTransferRateOffset[3]=350"
+# enable fan control
+nvidia-settings -a '[gpu:0]/GPUFanControlState=1'
+# set fan speed
+nvidia-settings -a '[fan:0]/GPUTargetFanSpeed=70'
+# core clock 
+nvidia-settings -a "[gpu:1]/GPUGraphicsClockOffset[3]=200"
+# memory clock
+nvidia-settings -a "[gpu:1]/GPUMemoryTransferRateOffset[3]=450"
+# enable fan control
+nvidia-settings -a '[gpu:1]/GPUFanControlState=1'
+# set fan speed
+nvidia-settings -a '[fan:1]/GPUTargetFanSpeed=60'
+```
+2. 存成 `myscript.sh`，去terminal`chmod+x myscript.sh`開啟可執行權限
+3. 執行`./myscript` 就設定完成了！
 
 
 
